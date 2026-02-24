@@ -12,13 +12,13 @@ export default function Home() {
 
   const createNewDiagram = () => {
     const encoded = compressCode(DEFAULT_DIAGRAM);
-    navigate(`/edit/${encoded}`);
+    navigate(`/edit?d=${encoded}`);
   };
 
   const createNewMarkdown = () => {
     const data = JSON.stringify({ title: 'New Document', content: DEFAULT_MARKDOWN });
     const encoded = compressCode(data);
-    navigate(`/markdown/edit/${encoded}`);
+    navigate(`/markdown/edit?d=${encoded}`);
   };
 
   const allItems = [
@@ -87,13 +87,13 @@ export default function Home() {
               {item.docType === 'diagram' ? (
                 <>
                   <Link 
-                    to={`/edit/${item.id}`} 
+                    to={item.link || `/edit?d=${item.id}`} 
                     style={{ textDecoration: 'none', color: '#0066cc', fontWeight: 'bold' }}
                   >
                     Edit
                   </Link>
                   <Link 
-                    to={`/view/${item.id}`} 
+                    to={item.link ? item.link.replace('/edit', '/view') : `/view?d=${item.id}`} 
                     style={{ textDecoration: 'none', color: '#0066cc', fontWeight: 'bold' }}
                   >
                     Fullscreen
@@ -115,13 +115,13 @@ export default function Home() {
               ) : (
                 <>
                   <Link 
-                    to={`/markdown/edit/${item.id}`} 
+                    to={item.link || `/markdown/edit?d=${item.id}`} 
                     style={{ textDecoration: 'none', color: '#0066cc', fontWeight: 'bold' }}
                   >
                     Edit
                   </Link>
                   <Link 
-                    to={`/markdown/view/${item.id}`} 
+                    to={item.link ? item.link.replace('/edit', '/view') : `/markdown/view?d=${item.id}`} 
                     style={{ textDecoration: 'none', color: '#0066cc', fontWeight: 'bold' }}
                   >
                     Fullscreen

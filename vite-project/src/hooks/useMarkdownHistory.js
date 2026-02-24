@@ -9,10 +9,10 @@ export const useMarkdownHistory = () => {
     setHistory(saved);
   }, []);
 
-  const addToHistory = (content, encoded, title = 'Untitled') => {
+  const addToHistory = (content, encoded, title = 'Untitled', link = `/markdown/edit?d=${encoded}`) => {
     const snippet = content.split('\n')[0].substring(0, 50) + (content.length > 50 ? '...' : '');
     const newHistory = [
-      { id: encoded, snippet, title, timestamp: Date.now(), type: 'markdown' },
+      { id: encoded, snippet, title, link, timestamp: Date.now(), type: 'markdown' },
       ...history.filter(h => h.id !== encoded)
     ].slice(0, MAX_HISTORY_ITEMS);
     

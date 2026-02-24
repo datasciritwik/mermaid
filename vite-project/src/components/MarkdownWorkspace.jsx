@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate, Link, useLocation } from 'react-router-dom';
 import Editor from '@monaco-editor/react';
 import { DEFAULT_MARKDOWN } from '../constants/config';
 import { compressCode, decompressCode } from '../utils/compression';
@@ -9,7 +9,10 @@ import globalStyles from '../styles/global.css?raw';
 import markdownStyles from '../styles/markdown.css?raw';
 
 export default function MarkdownWorkspace({ fullscreen = false }) {
-  const { encodedData } = useParams();
+  const { encodedData: pathEncoded } = useParams();
+  const { search } = useLocation();
+  const qs = new URLSearchParams(search);
+  const encodedData = pathEncoded || qs.get('d');
   const navigate = useNavigate();
   const { addToHistory } = useMarkdownHistory();
   
@@ -64,8 +67,9 @@ export default function MarkdownWorkspace({ fullscreen = false }) {
     if (!content) return;
     const data = JSON.stringify({ title, content });
     const encoded = compressCode(data);
-    addToHistory(content, encoded, title);
-    navigate(fullscreen ? `/markdown/view/${encoded}` : `/markdown/edit/${encoded}`, { replace: true });
+    const link = fullscreen ? `/markdown/view?d=${encoded}` : `/markdown/edit?d=${encoded}`;
+    addToHistory(content, encoded, title, link);
+    navigate(link, { replace: true });
     setIsSaved(true);
   };
 
@@ -156,7 +160,21 @@ export default function MarkdownWorkspace({ fullscreen = false }) {
       <div className="preview-pane" style={{ background: '#fafafa' }}>
         <div style={{ position: 'absolute', top: 15, right: 15, display: 'flex', gap: '10px', zIndex: 10 }}>
           <Link to="/" className="btn btn-secondary" style={{ textDecoration: 'none' }}>Dashboard</Link>
-          <Link to={`/markdown/view/${encodedData || ''}`} className="btn btn-primary" style={{ textDecoration: 'none' }}>Fullscreen</Link>
+          <Link to={encodedData ? `/markdown/view?d=${encodedData}` : '/markdown/view'} className="btn btn-primary" style={{ textDecoration: 'none' }}>Fullscreen</Link>
+          <button
+            onClick={async () => {
+              try {
+                const url = `${window.location.origin}${window.location.pathname}#/markdown/edit?d=${encodeURIComponent(encodedData || compressCode(data))}`;
+                await navigator.clipboard.writeText(url);
+                alert('Link copied: ' + `${url.slice(0,6)}...${url.slice(-6)}`);
+              } catch (e) {
+                alert('Copy failed.');
+              }
+            }}
+            className="btn btn-secondary"
+          >
+            Share
+          </button>
         </div>
         <div style={{ maxWidth: '600px', margin: '0 auto', padding: '2rem 1rem', overflow: 'auto', width: '100%' }}>
           <div className="markdown-preview" ref={previewRef} />

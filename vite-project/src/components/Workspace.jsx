@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate, Link, useLocation } from 'react-router-dom';
 import Editor from '@monaco-editor/react';
 import { DEFAULT_DIAGRAM } from '../constants/config';
 import { compressCode, decompressCode } from '../utils/compression';
@@ -8,7 +8,10 @@ import { useDiagramHistory } from '../hooks/useDiagramHistory';
 import globalStyles from '../styles/global.css?raw';
 
 export default function Workspace({ fullscreen = false }) {
-  const { encodedData } = useParams();
+  const { encodedData: pathEncoded } = useParams();
+  const { search } = useLocation();
+  const qs = new URLSearchParams(search);
+  const encodedData = pathEncoded || qs.get('d');
   const navigate = useNavigate();
   const { addToHistory } = useDiagramHistory();
   
@@ -58,8 +61,9 @@ export default function Workspace({ fullscreen = false }) {
   const handleSave = () => {
     if (!code) return;
     const encoded = compressCode(code);
-    addToHistory(code, encoded);
-    navigate(fullscreen ? `/view/${encoded}` : `/edit/${encoded}`, { replace: true });
+    const link = fullscreen ? `/view?d=${encoded}` : `/edit?d=${encoded}`;
+    addToHistory(code, encoded, link);
+    navigate(link, { replace: true });
     setIsSaved(true);
   };
 
@@ -130,7 +134,23 @@ export default function Workspace({ fullscreen = false }) {
       <div className="preview-pane">
         <div style={{ position: 'absolute', top: 15, right: 15, display: 'flex', gap: '10px', zIndex: 10 }}>
           <Link to="/" className="btn btn-secondary" style={{ textDecoration: 'none' }}>Dashboard</Link>
-          <Link to={`/view/${encodedData || ''}`} className="btn btn-primary" style={{ textDecoration: 'none' }}>Fullscreen</Link>
+            <Link to={encodedData ? `/view?d=${encodedData}` : '/view'} className="btn btn-primary" style={{ textDecoration: 'none' }}>Fullscreen</Link>
+            <button
+              onClick={async () => {
+                try {
+                  const url = `${window.location.origin}${window.location.pathname}#/edit?d=${encodeURIComponent(encodedData || compressCode(code))}`;
+                  await navigator.clipboard.writeText(url);
+                  const btn = document.createElement('span');
+                  btn.textContent = `${url.slice(0,6)}...${url.slice(-6)}`;
+                  alert('Link copied: ' + btn.textContent);
+                } catch (e) {
+                  alert('Copy failed.');
+                }
+              }}
+              className="btn btn-secondary"
+            >
+              Share
+            </button>
         </div>
         <div ref={mermaidRef} style={{ width: '100%', display: 'flex', justifyContent: 'center' }} />
       </div>

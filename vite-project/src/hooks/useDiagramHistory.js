@@ -9,10 +9,10 @@ export const useDiagramHistory = () => {
     setHistory(saved);
   }, []);
 
-  const addToHistory = (code, encoded) => {
+  const addToHistory = (code, encoded, link = `/edit?d=${encoded}`) => {
     const snippet = code.split('\n').slice(0, 2).join(' ') + '...';
     const newHistory = [
-      { id: encoded, snippet, timestamp: Date.now() },
+      { id: encoded, snippet, link, timestamp: Date.now() },
       ...history.filter(h => h.id !== encoded)
     ].slice(0, MAX_HISTORY_ITEMS);
     
